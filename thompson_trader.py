@@ -128,3 +128,197 @@ portfolio2 = [
     'TRENT.NS', 'POLICYBZR.NS', 'CUMMINSIND.NS', 'MOTHERSON.NS',
     'VOLTAS.NS'
 ]
+
+# Sector classification for Indian stocks
+sector_mapping = {
+    # Banking & Financial Services
+    'HDFCBANK.NS': 'Banking & Financial',
+    'ICICIBANK.NS': 'Banking & Financial',
+    'SBIN.NS': 'Banking & Financial',
+    'KOTAKBANK.NS': 'Banking & Financial',
+    'AXISBANK.NS': 'Banking & Financial',
+    'BAJFINANCE.NS': 'Banking & Financial',
+    'IFCI.NS': 'Banking & Financial',
+    'IRFC.NS': 'Banking & Financial',
+    'CDSL.NS': 'Banking & Financial',
+    
+    # Information Technology
+    'TCS.NS': 'Information Technology',
+    'INFY.NS': 'Information Technology',
+    'KAYNES.NS': 'Information Technology',
+    'POLICYBZR.NS': 'Information Technology',
+    
+    # Oil & Gas
+    'RELIANCE.NS': 'Oil & Gas',
+    'OIL.NS': 'Oil & Gas',
+    
+    # Consumer Goods
+    'HINDUNILVR.NS': 'Consumer Goods',
+    'ITC.NS': 'Consumer Goods',
+    'ASIANPAINT.NS': 'Consumer Goods',
+    'MARUTI.NS': 'Consumer Goods',
+    'TRENT.NS': 'Consumer Goods',
+    'BLUESTARCO.NS': 'Consumer Goods',
+    'VOLTAS.NS': 'Consumer Goods',
+    
+    # Telecommunications
+    'BHARTIARTL.NS': 'Telecommunications',
+    
+    # Engineering & Construction
+    'LT.NS': 'Engineering & Construction',
+    'COCHINSHIP.NS': 'Engineering & Construction',
+    'CUMMINSIND.NS': 'Engineering & Construction',
+    
+    # Power & Energy
+    'SUZLON.NS': 'Power & Energy',
+    'ADANIGREEN.NS': 'Power & Energy',
+    
+    # Metals & Mining
+    'JWL.NS': 'Metals & Mining',
+    
+    # Auto Components
+    'MOTHERSON.NS': 'Auto Components'
+}
+
+def get_sector_allocation(selections, symbols):
+    """Calculate sector-wise allocation from stock selections"""
+    sector_counts = {}
+    total_selections = len(selections)
+    
+    for selection in selections:
+        if selection in sector_mapping:
+            sector = sector_mapping[selection]
+            sector_counts[sector] = sector_counts.get(sector, 0) + 1
+    
+    # Convert to percentages
+    sector_allocation = {sector: (count / total_selections) * 100 
+                        for sector, count in sector_counts.items()}
+    
+    return sector_allocation
+
+def get_portfolio_sectors(symbols):
+    """Get sector breakdown for a given portfolio"""
+    sector_counts = {}
+    for symbol in symbols:
+        if symbol in sector_mapping:
+            sector = sector_mapping[symbol]
+            sector_counts[sector] = sector_counts.get(sector, 0) + 1
+    
+    # Convert to percentages
+    total_stocks = len(symbols)
+    sector_breakdown = {sector: (count / total_stocks) * 100 
+                       for sector, count in sector_counts.items()}
+    
+    return sector_breakdown
+
+def calculate_buy_and_hold_performance(symbols, data, initial_investment=100000):
+    """Calculate buy-and-hold strategy performance"""
+    if len(symbols) == 0:
+        return [], 0, 0
+    
+    # Equal weight allocation
+    weights = np.ones(len(symbols)) / len(symbols)
+    
+    # Calculate portfolio returns
+    returns_data = data[symbols].pct_change().dropna()
+    portfolio_returns = (returns_data * weights).sum(axis=1)
+    
+    # Calculate cumulative portfolio value
+    portfolio_values = [initial_investment]
+    for ret in portfolio_returns:
+        portfolio_values.append(portfolio_values[-1] * (1 + ret))
+    
+    # Calculate metrics
+    total_return = (portfolio_values[-1] / initial_investment - 1) * 100
+    daily_returns = np.diff(portfolio_values) / portfolio_values[:-1]
+    sharpe_ratio = np.mean(daily_returns) / np.std(daily_returns) * np.sqrt(252) if np.std(daily_returns) > 0 else 0
+    
+    return portfolio_values, total_return, sharpe_ratio
+
+def calculate_random_selection_performance(symbols, data, initial_investment=100000, seed=None):
+    """Calculate random selection strategy performance"""
+    if len(symbols) == 0:
+        return [], 0, 0
+    
+    if seed is not None:
+        np.random.seed(seed)
+    
+    returns_data = data[symbols].pct_change().dropna()
+    portfolio_values = [initial_investment]
+    
+    for date in returns_data.index:
+        # Randomly select one stock each day
+        selected_stock = np.random.choice(symbols)
+        daily_return = returns_data.loc[date, selected_stock]
+        portfolio_values.append(portfolio_values[-1] * (1 + daily_return))
+    
+    # Calculate metrics
+    total_return = (portfolio_values[-1] / initial_investment - 1) * 100
+    daily_returns = np.diff(portfolio_values) / portfolio_values[:-1]
+    sharpe_ratio = np.mean(daily_returns) / np.std(daily_returns) * np.sqrt(252) if np.std(daily_returns) > 0 else 0
+    
+    return portfolio_values, total_return, sharpe_ratio
+
+def calculate_risk_metrics(portfolio_values):
+    """Calculate various risk metrics for a portfolio"""
+    if len(portfolio_values) < 2:
+        return {
+            'max_drawdown': 0,
+            'volatility': 0,
+            'var_95': 0,
+            'cvar_95': 0,
+            'calmar_ratio': 0
+        }
+    
+    # Calculate daily returns
+    daily_returns = np.diff(portfolio_values) / portfolio_values[:-1]
+    
+    # Maximum Drawdown
+    peak = portfolio_values[0]
+    max_drawdown = 0
+    for value in portfolio_values:
+        if value > peak:
+            peak = value
+        drawdown = (peak - value) / peak
+        max_drawdown = max(max_drawdown, drawdown)
+    
+    # Volatility (annualized)
+    volatility = np.std(daily_returns) * np.sqrt(252)
+    
+    # Value at Risk (95% confidence)
+    var_95 = np.percentile(daily_returns, 5)
+    
+    # Conditional Value at Risk (95% confidence)
+    cvar_95 = np.mean(daily_returns[daily_returns <= var_95])
+    
+    # Calmar Ratio (annualized return / max drawdown)
+    total_return = (portfolio_values[-1] / portfolio_values[0] - 1)
+    annualized_return = (1 + total_return) ** (252 / len(daily_returns)) - 1
+    calmar_ratio = annualized_return / max_drawdown if max_drawdown > 0 else 0
+    
+    return {
+        'max_drawdown': max_drawdown * 100,  # Convert to percentage
+        'volatility': volatility * 100,      # Convert to percentage
+        'var_95': var_95 * 100,              # Convert to percentage
+        'cvar_95': cvar_95 * 100,            # Convert to percentage
+        'calmar_ratio': calmar_ratio
+    }
+
+def calculate_portfolio_risk_metrics(portfolio_values_list):
+    """Calculate risk metrics for multiple portfolio simulations"""
+    all_metrics = []
+    
+    for portfolio_values in portfolio_values_list:
+        metrics = calculate_risk_metrics(portfolio_values)
+        all_metrics.append(metrics)
+    
+    # Calculate mean and std of risk metrics
+    mean_metrics = {}
+    std_metrics = {}
+    
+    for key in all_metrics[0].keys():
+        values = [m[key] for m in all_metrics]
+        mean_metrics[key] = np.mean(values)
+        std_metrics[key] = np.std(values)
+    
+    return mean_metrics, std_metrics
