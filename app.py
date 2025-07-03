@@ -10,10 +10,8 @@ from thompson_trader import (
     run_multiple_simulations,
     download_and_prepare_data,
     get_sector_allocation,
-    get_portfolio_sectors,
     calculate_buy_and_hold_performance,
     calculate_random_selection_performance,
-    calculate_risk_metrics,
     calculate_portfolio_risk_metrics
 )
 import time
@@ -456,39 +454,61 @@ if 'show_info_details' not in st.session_state:
 col_title, col_info = st.columns([0.95, 0.05])
 with col_title:
     st.markdown("""
-        <h1 class="main-title" style="margin-bottom: 0; text-align: center;">
-            Thompson Sampling Stock Trader
-        </h1>
-        <h1 class="subtitle">Optimal Stock Trading Strategy Using Thompson Sampling in the Context of Multi-Armed Bandits</h1>
-    """, unsafe_allow_html=True)
+        <h1 style="text-align: center; font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: transparent; font-family: 'Sora', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; animation: glow 2s ease-in-out infinite alternate; filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.3)); margin-bottom: 0.2rem;">\n    Thompson Sampling Stock Trader\n</h1>\n    <h1 class=\"subtitle\">Optimal Stock Trading Strategy Using Thompson Sampling in the Context of Multi-Armed Bandits</h1>\n""", unsafe_allow_html=True)
+st.markdown("""
+<style>
+/* Increase expander label size */
+details > summary {
+    font-size: 1.3rem !important;
+    font-weight: 600;
+    color: #38bdf8;  /* Optional: make it bright blue */
+}
+</style>
+""", unsafe_allow_html=True)
 
 with st.expander("What do these terms mean?", expanded=False):
     st.markdown("""
-    <div style="color: #bae6fd; font-size: 1.1rem;">
-    <h3 style="color: #38bdf8;">Multi-Armed Bandit</h3>
-    <p>
-    The <b>Multi-Armed Bandit</b> problem is a classic scenario in probability and machine learning. Imagine a row of slot machines ("one-armed bandits"), each with an unknown payout. The challenge is to find the best strategy to maximize your total reward over time by balancing <b>exploration</b> (trying different machines) and <b>exploitation</b> (sticking with the best one found so far).
-    </p>
-    <h3 style="color: #38bdf8;">Thompson Sampling</h3>
-    <p>
-    <b>Thompson Sampling</b> is a Bayesian algorithm for solving the Multi-Armed Bandit problem. It models the uncertainty of each option's reward and randomly samples from these models to decide which to try next. Over time, it naturally balances exploration and exploitation, focusing more on the best-performing options.
-    </p>
-    <h3 style="color: #38bdf8;">Total Return</h3>
-    <p>
-    <b>Total Return</b> is the overall percentage gain or loss of a portfolio over a period, including all price changes and dividends. It is calculated as:<br>
-    <code>Total Return = (Final Value / Initial Value - 1) × 100%</code>
-    </p>
-    <h3 style="color: #38bdf8;">Sharpe Ratio</h3>
-    <p>
-    The <b>Sharpe Ratio</b> measures risk-adjusted return. It is the average return earned in excess of the risk-free rate per unit of volatility (standard deviation). Higher Sharpe ratios indicate better risk-adjusted performance.<br>
-    <code>Sharpe Ratio = (Mean Portfolio Return) / (Portfolio Standard Deviation)</code>
-    </p>
-    <h3 style="color: #38bdf8;">Other Terms</h3>
-    <ul>
-    <li><b>Buy & Hold:</b> A strategy where you simply buy a portfolio and hold it for the entire period, without trading.</li>
-    <li><b>Simulations:</b> Running the strategy multiple times to estimate average performance and variability.</li>
-    <li><b>Confidence Band:</b> The shaded area around a line in a chart, showing the range of possible outcomes (e.g., ±1 standard deviation).</li>
-    </ul>
+    <div style="font-size: 1.25rem; line-height: 1.6; color: #bae6fd;">
+
+    **Multi-Armed Bandit**
+
+    The Multi-Armed Bandit problem is a classic in probability and machine learning. Imagine a row of slot machines (“one-armed bandits”), each with an unknown payout. The challenge is to maximize your total reward over time by balancing:
+
+    - **Exploration** (trying different machines to discover their payouts)  
+    - **Exploitation** (choosing the machine that has paid out best so far)
+
+    ---
+
+    **Thompson Sampling**
+
+    Thompson Sampling is a Bayesian algorithm used to solve the Multi-Armed Bandit problem. It maintains a probability distribution for the expected reward of each option and randomly samples from these distributions to decide which to try. Over time, it naturally shifts toward favoring the most promising choices — effectively balancing exploration and exploitation.
+
+    ---
+
+    **Total Return**
+
+    Total Return is the overall percentage gain or loss of a portfolio over a period, factoring in both price changes and dividends.
+
+    **Formula:**
+    <pre><code>Total Return = ((Final Value / Initial Value) - 1) × 100%</code></pre>
+
+    ---
+
+    **Sharpe Ratio**
+
+    The Sharpe Ratio measures risk-adjusted performance. It indicates how much excess return you earn per unit of risk (volatility). A higher ratio means better risk-adjusted returns.
+
+    **Formula:**
+    <pre><code>Sharpe Ratio = (Mean Portfolio Return - Risk-Free Rate) / Portfolio Standard Deviation</code></pre>
+
+    ---
+
+    **Other Terms**
+    - **Buy & Hold:** A passive investment strategy where you purchase assets and hold them long-term without frequent trading.
+    - **Simulations:** Repeated trials of a strategy (e.g., 1,000 runs of a portfolio model) to estimate average outcomes and uncertainty.
+    - **Confidence Band:** A shaded region around a line in a chart showing the possible range of values (e.g., ±1 standard deviation from the mean).
+    - **Exploration vs. Exploitation Trade-off:** This is the fundamental tension in decision-making under uncertainty — whether to try new actions (exploration) or stick to known good ones (exploitation). Algorithms like Thompson Sampling solve this trade-off dynamically.
+
     </div>
     """, unsafe_allow_html=True)
 
